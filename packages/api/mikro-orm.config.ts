@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { Migrator } from '@mikro-orm/migrations';
 import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
@@ -10,12 +11,18 @@ import { OrderItem } from './src/modules/pedidos/domain/order-item.entity';
 import { Activity } from './src/modules/dashboard/domain/activity.entity';
 import { Goal } from './src/modules/relatorios/domain/goal.entity';
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} não definido no ambiente`);
+  return value;
+}
+
 export default defineConfig({
-  host: process.env.DB_HOST ?? 'localhost',
-  port: Number(process.env.DB_PORT ?? 5432),
-  user: process.env.DB_USER ?? 'erp',
-  password: process.env.DB_PASSWORD ?? 'erp123',
-  dbName: process.env.DB_NAME ?? 'erp_vendas',
+  host: requireEnv('DB_HOST'),
+  port: Number(requireEnv('DB_PORT')),
+  user: requireEnv('DB_USER'),
+  password: requireEnv('DB_PASSWORD'),
+  dbName: requireEnv('DB_NAME'),
   entities: [User, Client, Product, Stock, Order, OrderItem, Activity, Goal],
   metadataProvider: TsMorphMetadataProvider,
   migrations: {

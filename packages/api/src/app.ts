@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import Fastify from 'fastify';
 import jwt from '@fastify/jwt';
 import cors from '@fastify/cors';
@@ -21,7 +22,8 @@ async function main() {
   await app.register(swaggerPlugin);
   await app.register(dbPlugin);
 
-  const jwtSecret = process.env.JWT_SECRET ?? 'erp-secret-dev';
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) throw new Error('JWT_SECRET não definido no ambiente');
   await app.register(jwt, { secret: jwtSecret });
 
   app.decorate('authenticate', async function (req: any, reply: any) {
@@ -42,7 +44,7 @@ async function main() {
   await app.register(dashboardRoutes);
   await app.register(reportRoutes);
 
-  const port = Number(process.env.PORT ?? 3000);
+  const port = Number(process.env.PORT);
   await app.listen({ port, host: '0.0.0.0' });
   console.log(`API rodando em http://localhost:${port}`);
   console.log(`Swagger em http://localhost:${port}/docs`);
