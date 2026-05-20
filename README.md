@@ -9,10 +9,10 @@ Sistema ERP de Gestão de Vendas desenvolvido para a disciplina **T.I Sistemas I
 | Camada | Tecnologia |
 |---|---|
 | Frontend | React 18 + Vite + Tailwind CSS |
-| Roteamento | TanStack Router |
+| Roteamento | TanStack Router (file-based) |
 | Data fetching | TanStack Query + Axios |
 | Validação | Zod + React Hook Form |
-| Backend | Fastify 4 + Sustell@2024TypeScript |
+| Backend | Fastify 4 + TypeScript |
 | ORM | MikroORM 6 |
 | Banco de dados | PostgreSQL 16 |
 | Infraestrutura | Docker Compose |
@@ -39,7 +39,7 @@ erp-vendas/
 │           ├── features/     # Uma pasta por domínio (dashboard, vendas…)
 │           ├── components/   # UI e layout reutilizáveis
 │           ├── lib/          # axios, auth helpers
-│           └── routes/       # Definição do roteador
+│           └── routes/       # Rotas file-based (gerado: routeTree.gen.ts)
 │
 ├── docker-compose.yml
 └── Makefile
@@ -56,9 +56,10 @@ erp-vendas/
 
 ## Primeiros passos
 
-Clone o repositório e rode o setup completo (banco + dependências + migrations + seed):
+Clone o repositório, configure as variáveis de ambiente e rode o setup completo:
 
 ```bash
+cp packages/api/.env.example packages/api/.env
 make setup
 ```
 
