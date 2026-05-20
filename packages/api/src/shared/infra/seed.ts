@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/core';
-import config from '../../mikro-orm.config';
+import config from '../../../mikro-orm.config';
 import { User, UserRole } from '../../modules/auth/domain/user.entity';
 import { Client } from '../../modules/clientes/domain/client.entity';
 import { Product } from '../../modules/produtos/domain/product.entity';

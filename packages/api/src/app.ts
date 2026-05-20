@@ -32,13 +32,15 @@ async function main() {
     }
   });
 
-  await app.register(fp(authRoutes));
-  await app.register(fp(clientRoutes));
-  await app.register(fp(productRoutes));
-  await app.register(fp(stockRoutes));
-  await app.register(fp(orderRoutes));
-  await app.register(fp(dashboardRoutes));
-  await app.register(fp(reportRoutes));
+  // rotas sem fp() para preservar encapsulamento — o addHook de cada módulo
+  // fica restrito ao seu escopo e não vaza para o POST /auth/login
+  await app.register(authRoutes);
+  await app.register(clientRoutes);
+  await app.register(productRoutes);
+  await app.register(stockRoutes);
+  await app.register(orderRoutes);
+  await app.register(dashboardRoutes);
+  await app.register(reportRoutes);
 
   const port = Number(process.env.PORT ?? 3000);
   await app.listen({ port, host: '0.0.0.0' });

@@ -1,5 +1,7 @@
+SHELL := /bin/bash
+
 .PHONY: install dev build typecheck seed migration-up migration-create \
-        db db-up db-down db-reset orval setup clean
+        migrate-and-seed db db-up db-down db-reset orval setup clean
 
 # ── Configuração ────────────────────────────────────────────────────────────
 API_DIR  := packages/api
@@ -74,6 +76,8 @@ migration-create:
 seed:
 	cd $(API_DIR) && npm run seed
 
+migrate-and-seed: migration-up seed
+
 # ── Orval (geração do client HTTP tipado) ────────────────────────────────────
 orval:
 	cd $(WEB_DIR) && npm run orval
@@ -98,6 +102,7 @@ help:
 	@echo "  make db-down          Para o Docker"
 	@echo "  make db-reset         Recria banco + migrations + seed"
 	@echo "  make migration-up     Roda as migrations pendentes"
+	@echo "  make migrate-and-seed Roda migrations + seed em sequência"
 	@echo "  make migration-create Cria nova migration"
 	@echo "  make seed             Popula o banco com dados iniciais"
 	@echo "  make orval            Regenera o client HTTP a partir do OpenAPI"
