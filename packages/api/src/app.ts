@@ -2,6 +2,7 @@ import 'dotenv/config';
 import Fastify from 'fastify';
 import jwt from '@fastify/jwt';
 import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import fp from 'fastify-plugin';
 
 import dbPlugin from './plugins/db.plugin';
@@ -19,6 +20,7 @@ const app = Fastify({ logger: true });
 
 async function main() {
   await app.register(cors, { origin: true });
+  await app.register(rateLimit, { global: true, max: 100, timeWindow: '1 minute' });
   await app.register(swaggerPlugin);
   await app.register(dbPlugin);
 

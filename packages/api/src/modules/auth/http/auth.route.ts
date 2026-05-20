@@ -26,7 +26,7 @@ export default async function authRoutes(app: FastifyInstance) {
     const em = RequestContext.getEntityManager()!;
     const useCase = new LoginUseCase(em);
     const user = await useCase.execute(email, password);
-    const token = app.jwt.sign({ sub: user.id, role: user.role });
+    const token = app.jwt.sign({ sub: user.id, role: user.role }, { expiresIn: '2h' });
     return reply.send({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   });
 

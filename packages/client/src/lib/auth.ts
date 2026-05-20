@@ -24,6 +24,22 @@ export function clearAuth() {
   localStorage.removeItem('user');
 }
 
+function decodeJwtPayload(token: string): { exp?: number } | null {
+  try {
+    return JSON.parse(atob(token.split('.')[1]));
+  } catch {
+    return null;
+  }
+}
+
+export function isTokenExpired(): boolean {
+  const token = getToken();
+  if (!token) return true;
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) return false;
+  return Date.now() >= payload.exp * 1000;
+}
+
 export function isAuthenticated(): boolean {
-  return !!getToken();
+  return !!getToken() && !isTokenExpired();
 }
