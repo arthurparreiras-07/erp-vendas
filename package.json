@@ -1,0 +1,20 @@
+{
+  "name": "erp-vendas",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/api",
+    "packages/client"
+  ],
+  "scripts": {
+    "dev": "make dev",
+    "build": "make build",
+    "typecheck": "make typecheck"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

@@ -1,50 +1,48 @@
 SHELL := /bin/bash
+.DEFAULT_GOAL := help
 
-.PHONY: install dev build typecheck seed migration-up migration-create \
-        migrate-and-seed db db-up db-down db-reset orval setup clean
+.PHONY: install dev dev-api dev-client typecheck typecheck-api typecheck-web \
+        seed migration-up migration-create migrate-and-seed \
+        db db-up db-down db-reset orval setup clean help
 
 # ── Configuração ────────────────────────────────────────────────────────────
-API_DIR  := packages/api
-WEB_DIR  := packages/client
+API_DIR := packages/api
+WEB_DIR := packages/client
 
 # ── Setup inicial (rode uma vez após clonar) ────────────────────────────────
-setup: db-up install migration-up seed
+setup: db-up install migrate-and-seed
 	@echo ""
-	@echo "Projeto pronto. Rode 'make dev' para iniciar."
+	@echo "  Projeto pronto. Rode 'make dev' para iniciar."
 
 # ── Dependências ────────────────────────────────────────────────────────────
 install:
-	cd $(API_DIR) && npm install
-	cd $(WEB_DIR) && npm install
+	rm -rf node_modules
+	rm -rf $(API_DIR)/node_modules
+	rm -rf $(WEB_DIR)/node_modules
+	npm install
 
 # ── Desenvolvimento ─────────────────────────────────────────────────────────
 dev:
-	@trap 'kill 0' SIGINT; \
-	cd $(API_DIR) && npm run dev & \
-	cd $(WEB_DIR) && npm run dev & \
-	wait
+	$(MAKE) -j2 dev-api dev-client
 
 dev-api:
-	cd $(API_DIR) && npm run dev
+	npm run dev -w $(API_DIR)
 
-dev-web:
-	cd $(WEB_DIR) && npm run dev
+dev-client:
+	npm run dev -w $(WEB_DIR)
 
-# ── Build ────────────────────────────────────────────────────────────────────
-build:
-	cd $(API_DIR) && npm run build
-	cd $(WEB_DIR) && npm run build
-
-# ── Type checking ────────────────────────────────────────────────────────────
+# ── Type checking (paralelo) ─────────────────────────────────────────────────
 typecheck:
-	cd $(API_DIR) && npx tsc --noEmit
-	cd $(WEB_DIR) && npx tsc --noEmit
+	@trap 'kill 0' SIGINT; \
+	npx tsc --noEmit -p $(API_DIR)/tsconfig.json & \
+	npx tsc --noEmit -p $(WEB_DIR)/tsconfig.json & \
+	wait
 
 typecheck-api:
-	cd $(API_DIR) && npx tsc --noEmit
+	npx tsc --noEmit -p $(API_DIR)/tsconfig.json
 
 typecheck-web:
-	cd $(WEB_DIR) && npx tsc --noEmit
+	npx tsc --noEmit -p $(WEB_DIR)/tsconfig.json
 
 # ── Banco de dados ───────────────────────────────────────────────────────────
 db:
@@ -59,52 +57,58 @@ db-up:
 db-down:
 	docker compose down
 
-db-reset: db-down
+db-reset:
 	docker compose down -v
 	docker compose up -d
 	@until docker exec erp-vendas-db pg_isready -U erp -q; do sleep 1; done
-	$(MAKE) migration-up seed
+	$(MAKE) migrate-and-seed
 
 # ── Migrations ───────────────────────────────────────────────────────────────
 migration-up:
-	cd $(API_DIR) && npm run migration:up
+	npm run migration:up -w $(API_DIR)
 
 migration-create:
-	cd $(API_DIR) && npm run migration:create
+	npm run migration:create -w $(API_DIR)
 
 # ── Seed ─────────────────────────────────────────────────────────────────────
 seed:
-	cd $(API_DIR) && npm run seed
+	npm run seed -w $(API_DIR)
 
 migrate-and-seed: migration-up seed
 
-# ── Orval (geração do client HTTP tipado) ────────────────────────────────────
+# ── Orval (geração do client HTTP tipado — requer API rodando) ────────────────
 orval:
-	cd $(WEB_DIR) && npm run orval
+	npm run orval -w $(WEB_DIR)
 
 # ── Limpeza ──────────────────────────────────────────────────────────────────
 clean:
-	rm -rf $(API_DIR)/dist $(API_DIR)/node_modules
-	rm -rf $(WEB_DIR)/dist $(WEB_DIR)/node_modules
+	rm -rf $(API_DIR)/dist
+	rm -rf $(WEB_DIR)/dist
 
 # ── Ajuda ────────────────────────────────────────────────────────────────────
 help:
 	@echo ""
-	@echo "  make setup            Setup completo (primeira vez)"
-	@echo "  make install          Instala dependências (api + web)"
-	@echo "  make dev              Inicia api + web em paralelo"
-	@echo "  make dev-api          Inicia apenas o backend"
-	@echo "  make dev-web          Inicia apenas o frontend"
-	@echo "  make build            Build de produção (api + web)"
-	@echo "  make typecheck        Type check (api + web)"
-	@echo "  make db               Sobe o PostgreSQL com logs no terminal"
-	@echo "  make db-up            Sobe o PostgreSQL em background"
-	@echo "  make db-down          Para o Docker"
-	@echo "  make db-reset         Recria banco + migrations + seed"
-	@echo "  make migration-up     Roda as migrations pendentes"
-	@echo "  make migrate-and-seed Roda migrations + seed em sequência"
-	@echo "  make migration-create Cria nova migration"
-	@echo "  make seed             Popula o banco com dados iniciais"
-	@echo "  make orval            Regenera o client HTTP a partir do OpenAPI"
-	@echo "  make clean            Remove node_modules e dist"
+	@echo "  make setup             Setup completo (primeira vez)"
+	@echo "  make install           Instala dependências via npm workspaces"
+	@echo ""
+	@echo "  make dev               Inicia api + web em paralelo"
+	@echo "  make dev-api           Inicia apenas o backend"
+	@echo "  make dev-client        Inicia apenas o frontend"
+	@echo ""
+	@echo "  make typecheck         Type check (api + web, paralelo)"
+	@echo "  make typecheck-api     Type check apenas do backend"
+	@echo "  make typecheck-web     Type check apenas do frontend"
+	@echo ""
+	@echo "  make db                Sobe o PostgreSQL com logs no terminal"
+	@echo "  make db-up             Sobe o PostgreSQL em background"
+	@echo "  make db-down           Para o Docker"
+	@echo "  make db-reset          Recria banco + volumes + migrations + seed"
+	@echo ""
+	@echo "  make migration-up      Roda as migrations pendentes"
+	@echo "  make migration-create  Cria nova migration"
+	@echo "  make migrate-and-seed  Roda migrations + seed em sequência"
+	@echo "  make seed              Popula o banco com dados iniciais"
+	@echo ""
+	@echo "  make orval             Regenera o client HTTP (requer API rodando)"
+	@echo "  make clean             Remove node_modules e dist"
 	@echo ""
