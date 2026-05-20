@@ -1,26 +1,16 @@
 import axios from 'axios';
-import { clearAuth, isTokenExpired } from '@/lib/auth';
+import { clearAuth } from '@/lib/auth';
 
-export const api = axios.create({ baseURL: '/api' });
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    if (isTokenExpired()) {
-      clearAuth();
-      window.location.href = '/login';
-      return Promise.reject(new Error('Sessão expirada'));
-    }
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+export const api = axios.create({
+  baseURL: '/api',
+  withCredentials: true,
 });
 
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('token');
+      clearAuth();
       window.location.href = '/login';
     }
     return Promise.reject(err);

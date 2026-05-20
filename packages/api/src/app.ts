@@ -2,6 +2,8 @@ import 'dotenv/config';
 import Fastify from 'fastify';
 import jwt from '@fastify/jwt';
 import cors from '@fastify/cors';
+import cookie from '@fastify/cookie';
+import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import fp from 'fastify-plugin';
 
@@ -19,14 +21,25 @@ import reportRoutes from './modules/relatorios/http/report.route';
 const app = Fastify({ logger: true });
 
 async function main() {
-  await app.register(cors, { origin: true });
+  // contentSecurityPolicy desabilitado para não bloquear o Swagger UI
+  await app.register(helmet, { contentSecurityPolicy: false });
+
+  await app.register(cors, {
+    origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173',
+    credentials: true,
+  });
+
   await app.register(rateLimit, { global: true, max: 100, timeWindow: '1 minute' });
+  await app.register(cookie);
   await app.register(swaggerPlugin);
   await app.register(dbPlugin);
 
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) throw new Error('JWT_SECRET não definido no ambiente');
-  await app.register(jwt, { secret: jwtSecret });
+  await app.register(jwt, {
+    secret: jwtSecret,
+    cookie: { cookieName: 'token', signed: false },
+  });
 
   app.decorate('authenticate', async function (req: any, reply: any) {
     try {

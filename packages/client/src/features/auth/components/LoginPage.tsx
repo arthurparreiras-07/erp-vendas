@@ -10,7 +10,7 @@ import { useState } from 'react';
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(4, 'Mínimo 4 caracteres'),
+  password: z.string().min(8, 'Mínimo 8 caracteres'),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -25,7 +25,7 @@ export function LoginPage() {
     setError('');
     try {
       const res = await api.post('/auth/login', data);
-      saveAuth(res.data.token, res.data.user);
+      saveAuth(res.data.user);
       navigate({ to: '/' });
     } catch {
       setError('E-mail ou senha incorretos');

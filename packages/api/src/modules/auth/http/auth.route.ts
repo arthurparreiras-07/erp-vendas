@@ -5,7 +5,7 @@ import { LoginUseCase } from '../application/login.use-case';
 
 const loginBody = z.object({
   email: z.string().email(),
-  password: z.string().min(4),
+  password: z.string().min(8),
 });
 
 export default async function authRoutes(app: FastifyInstance) {
@@ -27,7 +27,20 @@ export default async function authRoutes(app: FastifyInstance) {
     const useCase = new LoginUseCase(em);
     const user = await useCase.execute(email, password);
     const token = app.jwt.sign({ sub: user.id, role: user.role }, { expiresIn: '2h' });
-    return reply.send({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    reply.setCookie('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 2,
+    });
+    return reply.send({ user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+  });
+
+  app.post('/auth/logout', {
+    schema: { tags: ['Auth'] },
+  }, async (_req, reply) => {
+    return reply.clearCookie('token', { path: '/' }).send({ ok: true });
   });
 
   app.get('/auth/me', {

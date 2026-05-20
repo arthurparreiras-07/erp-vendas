@@ -1,5 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { clearAuth, getUser } from '@/lib/auth';
+import { api } from '@/lib/axios';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: '📊' },
@@ -40,7 +41,11 @@ export function Sidebar() {
       <div className="px-4 py-4 border-t border-slate-700">
         <p className="text-xs text-slate-400 truncate">{user?.name}</p>
         <button
-          onClick={() => { clearAuth(); window.location.href = '/login'; }}
+          onClick={async () => {
+            await api.post('/auth/logout').catch(() => {});
+            clearAuth();
+            window.location.href = '/login';
+          }}
           className="mt-1 text-xs text-slate-400 hover:text-white"
         >
           Sair
