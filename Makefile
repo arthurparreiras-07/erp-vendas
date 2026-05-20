@@ -33,10 +33,7 @@ dev-client:
 
 # ── Type checking (paralelo) ─────────────────────────────────────────────────
 typecheck:
-	@trap 'kill 0' SIGINT; \
-	npx tsc --noEmit -p $(API_DIR)/tsconfig.json & \
-	npx tsc --noEmit -p $(WEB_DIR)/tsconfig.json & \
-	wait
+	$(MAKE) -j2 typecheck-api typecheck-web
 
 typecheck-api:
 	npx tsc --noEmit -p $(API_DIR)/tsconfig.json

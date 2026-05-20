@@ -3,3 +3,4 @@ dist/
 .env
 *.local
 packages/api/temp/
+packages/client/src/routeTree.gen.ts
