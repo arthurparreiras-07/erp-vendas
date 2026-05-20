@@ -4,7 +4,8 @@ import { RequestContext } from '@mikro-orm/core';
 import { CreateOrderUseCase } from '../application/create-order.use-case';
 import { ConfirmOrderUseCase } from '../application/confirm-order.use-case';
 import { CancelOrderUseCase } from '../application/cancel-order.use-case';
-import { Order, OrderStatus } from '../domain/order.entity';
+import { Order } from '../domain/order.entity';
+import { paginatedOrders } from '../../../shared/http/schemas';
 
 const createOrderBody = z.object({
   clientId: z.string().uuid(),
@@ -17,7 +18,20 @@ export default async function orderRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
   app.get('/orders', {
-    schema: { tags: ['Pedidos'] },
+    schema: {
+      tags: ['Pedidos'],
+      operationId: 'listOrders',
+      querystring: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', enum: ['pending', 'confirmed', 'cancelled'] },
+          sellerId: { type: 'string' },
+          clientId: { type: 'string' },
+          page: { type: 'integer' },
+        },
+      },
+      response: { 200: paginatedOrders },
+    },
   }, async (req) => {
     const { status, sellerId, clientId, page } = req.query as any;
     const em = RequestContext.getEntityManager()!;
@@ -36,7 +50,31 @@ export default async function orderRoutes(app: FastifyInstance) {
   });
 
   app.post('/orders', {
-    schema: { tags: ['Pedidos'] },
+    schema: {
+      tags: ['Pedidos'],
+      operationId: 'createOrder',
+      body: {
+        type: 'object',
+        required: ['clientId', 'items'],
+        properties: {
+          clientId: { type: 'string', format: 'uuid' },
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['productId', 'quantity'],
+              properties: {
+                productId: { type: 'string', format: 'uuid' },
+                quantity: { type: 'integer', minimum: 1 },
+              },
+            },
+          },
+          discount: { type: 'number', minimum: 0 },
+          tax: { type: 'number', minimum: 0 },
+        },
+      },
+      response: { 201: { $ref: 'Order#' } },
+    },
   }, async (req, reply) => {
     const data = createOrderBody.parse(req.body);
     const em = RequestContext.getEntityManager()!;
@@ -46,7 +84,16 @@ export default async function orderRoutes(app: FastifyInstance) {
   });
 
   app.get('/orders/:id', {
-    schema: { tags: ['Pedidos'] },
+    schema: {
+      tags: ['Pedidos'],
+      operationId: 'getOrder',
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
+      },
+      response: { 200: { $ref: 'Order#' } },
+    },
   }, async (req) => {
     const { id } = req.params as any;
     const em = RequestContext.getEntityManager()!;
@@ -54,7 +101,16 @@ export default async function orderRoutes(app: FastifyInstance) {
   });
 
   app.patch('/orders/:id/confirm', {
-    schema: { tags: ['Pedidos'] },
+    schema: {
+      tags: ['Pedidos'],
+      operationId: 'confirmOrder',
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
+      },
+      response: { 200: { $ref: 'Order#' } },
+    },
   }, async (req) => {
     const { id } = req.params as any;
     const em = RequestContext.getEntityManager()!;
@@ -62,7 +118,16 @@ export default async function orderRoutes(app: FastifyInstance) {
   });
 
   app.patch('/orders/:id/cancel', {
-    schema: { tags: ['Pedidos'] },
+    schema: {
+      tags: ['Pedidos'],
+      operationId: 'cancelOrder',
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
+      },
+      response: { 200: { $ref: 'Order#' } },
+    },
   }, async (req) => {
     const { id } = req.params as any;
     const em = RequestContext.getEntityManager()!;

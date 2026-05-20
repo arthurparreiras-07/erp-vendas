@@ -8,7 +8,19 @@ export default async function stockRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
   app.get('/stock', {
-    schema: { tags: ['Estoque'] },
+    schema: {
+      tags: ['Estoque'],
+      operationId: 'listStock',
+      querystring: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', enum: ['low', 'ok', 'all'] },
+        },
+      },
+      response: {
+        200: { type: 'array', items: { $ref: 'Stock#' } },
+      },
+    },
   }, async (req) => {
     const { status } = req.query as { status?: 'low' | 'ok' | 'all' };
     const em = RequestContext.getEntityManager()!;
@@ -19,7 +31,21 @@ export default async function stockRoutes(app: FastifyInstance) {
   });
 
   app.put('/stock/:productId', {
-    schema: { tags: ['Estoque'] },
+    schema: {
+      tags: ['Estoque'],
+      operationId: 'updateStock',
+      params: {
+        type: 'object',
+        properties: { productId: { type: 'string' } },
+        required: ['productId'],
+      },
+      body: {
+        type: 'object',
+        required: ['physical'],
+        properties: { physical: { type: 'integer', minimum: 0 } },
+      },
+      response: { 200: { $ref: 'Stock#' } },
+    },
   }, async (req) => {
     const { productId } = req.params as any;
     const { physical } = z.object({ physical: z.number().int().min(0) }).parse(req.body);

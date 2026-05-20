@@ -9,7 +9,22 @@ export default async function reportRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
   app.get('/reports/sales', {
-    schema: { tags: ['Relatórios'] },
+    schema: {
+      tags: ['Relatórios'],
+      operationId: 'getSalesReport',
+      querystring: {
+        type: 'object',
+        properties: {
+          from: { type: 'string', format: 'date' },
+          to: { type: 'string', format: 'date' },
+          sellerId: { type: 'string' },
+          region: { type: 'string' },
+        },
+      },
+      response: {
+        200: { type: 'array', items: { $ref: 'SalesReportRow#' } },
+      },
+    },
   }, async (req) => {
     const { from, to, sellerId, region } = req.query as any;
     const em = RequestContext.getEntityManager()!;
@@ -17,14 +32,33 @@ export default async function reportRoutes(app: FastifyInstance) {
   });
 
   app.get('/goals', {
-    schema: { tags: ['Relatórios'] },
+    schema: {
+      tags: ['Relatórios'],
+      operationId: 'listGoals',
+      response: {
+        200: { type: 'array', items: { $ref: 'Goal#' } },
+      },
+    },
   }, async () => {
     const em = RequestContext.getEntityManager()!;
     return em.find(Goal, {}, { populate: ['seller'], orderBy: { period: 'DESC' } });
   });
 
   app.post('/goals', {
-    schema: { tags: ['Relatórios'] },
+    schema: {
+      tags: ['Relatórios'],
+      operationId: 'createGoal',
+      body: {
+        type: 'object',
+        required: ['sellerId', 'period', 'targetAmount'],
+        properties: {
+          sellerId: { type: 'string', format: 'uuid' },
+          period: { type: 'string', pattern: '^\\d{4}-\\d{2}$' },
+          targetAmount: { type: 'number', minimum: 0 },
+        },
+      },
+      response: { 201: { $ref: 'Goal#' } },
+    },
   }, async (req, reply) => {
     const { sellerId, period, targetAmount } = z.object({
       sellerId: z.string().uuid(),

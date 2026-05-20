@@ -8,21 +8,35 @@ export default async function dashboardRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
   app.get('/dashboard/kpis', {
-    schema: { tags: ['Dashboard'] },
+    schema: {
+      tags: ['Dashboard'],
+      operationId: 'getDashboardKpis',
+      response: { 200: { $ref: 'Kpis#' } },
+    },
   }, async () => {
     const em = RequestContext.getEntityManager()!;
     return new GetKpisUseCase(em).execute();
   });
 
   app.get('/dashboard/chart', {
-    schema: { tags: ['Dashboard'] },
+    schema: {
+      tags: ['Dashboard'],
+      operationId: 'getDashboardChart',
+      response: { 200: { $ref: 'Chart#' } },
+    },
   }, async () => {
     const em = RequestContext.getEntityManager()!;
     return new GetChartUseCase(em).execute();
   });
 
   app.get('/activities', {
-    schema: { tags: ['Dashboard'] },
+    schema: {
+      tags: ['Dashboard'],
+      operationId: 'listActivities',
+      response: {
+        200: { type: 'array', items: { $ref: 'Activity#' } },
+      },
+    },
   }, async () => {
     const em = RequestContext.getEntityManager()!;
     return em.find(Activity, {}, { orderBy: { createdAt: 'DESC' }, limit: 20 });

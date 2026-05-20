@@ -12,12 +12,20 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/auth/login', {
     schema: {
       tags: ['Auth'],
+      operationId: 'loginUser',
       body: {
         type: 'object',
         required: ['email', 'password'],
         properties: {
-          email: { type: 'string' },
-          password: { type: 'string' },
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 8 },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: { user: { $ref: 'AuthUser#' } },
+          required: ['user'],
         },
       },
     },
@@ -38,13 +46,27 @@ export default async function authRoutes(app: FastifyInstance) {
   });
 
   app.post('/auth/logout', {
-    schema: { tags: ['Auth'] },
+    schema: {
+      tags: ['Auth'],
+      operationId: 'logoutUser',
+      response: {
+        200: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' } },
+          required: ['ok'],
+        },
+      },
+    },
   }, async (_req, reply) => {
     return reply.clearCookie('token', { path: '/' }).send({ ok: true });
   });
 
   app.get('/auth/me', {
-    schema: { tags: ['Auth'] },
+    schema: {
+      tags: ['Auth'],
+      operationId: 'getMe',
+      response: { 200: { $ref: 'AuthUser#' } },
+    },
     onRequest: [app.authenticate],
   }, async (req, reply) => {
     const em = RequestContext.getEntityManager()!;
