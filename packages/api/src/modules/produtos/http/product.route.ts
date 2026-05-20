@@ -1,0 +1,57 @@
+import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import { RequestContext } from '@mikro-orm/core';
+import { CreateProductUseCase } from '../application/create-product.use-case';
+import { ListProductsUseCase } from '../application/list-products.use-case';
+import { Product } from '../domain/product.entity';
+
+const productBody = z.object({
+  sku: z.string().min(1),
+  name: z.string().min(2),
+  description: z.string().optional(),
+  costPrice: z.number().positive(),
+  salePrice: z.number().positive(),
+  category: z.string().optional(),
+  initialStock: z.number().int().min(0).optional(),
+});
+
+export default async function productRoutes(app: FastifyInstance) {
+  app.addHook('onRequest', app.authenticate);
+
+  app.get('/products', {
+    schema: { tags: ['Produtos'] },
+  }, async (req) => {
+    const { category, page, limit } = req.query as any;
+    const em = RequestContext.getEntityManager()!;
+    return new ListProductsUseCase(em).execute({ category, page: Number(page) || 1, limit: Number(limit) || 50 });
+  });
+
+  app.post('/products', {
+    schema: { tags: ['Produtos'] },
+  }, async (req, reply) => {
+    const data = productBody.parse(req.body);
+    const em = RequestContext.getEntityManager()!;
+    const product = await new CreateProductUseCase(em).execute(data);
+    return reply.status(201).send(product);
+  });
+
+  app.get('/products/:id', {
+    schema: { tags: ['Produtos'] },
+  }, async (req) => {
+    const { id } = req.params as any;
+    const em = RequestContext.getEntityManager()!;
+    return em.findOneOrFail(Product, id, { populate: ['stock'] });
+  });
+
+  app.put('/products/:id', {
+    schema: { tags: ['Produtos'] },
+  }, async (req) => {
+    const { id } = req.params as any;
+    const data = productBody.omit({ sku: true, initialStock: true }).partial().parse(req.body);
+    const em = RequestContext.getEntityManager()!;
+    const product = await em.findOneOrFail(Product, id);
+    product.update(data);
+    await em.flush();
+    return product;
+  });
+}
