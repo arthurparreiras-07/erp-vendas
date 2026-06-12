@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type AxiosRequestConfig } from 'axios';
 import { clearAuth } from '@/lib/auth';
 
 export const api = axios.create({
@@ -17,7 +17,7 @@ api.interceptors.response.use(
   }
 );
 
-export async function customAxios<T>(config: Parameters<typeof api>[0]): Promise<T> {
-  const { data } = await api(config as any);
+export async function customAxios<T>(config: AxiosRequestConfig): Promise<T> {
+  const { data } = await api(config);
   return data;
 }

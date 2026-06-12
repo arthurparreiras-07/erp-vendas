@@ -1,11 +1,12 @@
 import fp from 'fastify-plugin';
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { MikroORM, RequestContext } from '@mikro-orm/core';
 import config from '../../mikro-orm.config';
 
 declare module 'fastify' {
   interface FastifyInstance {
     orm: MikroORM;
+    authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 }
 
