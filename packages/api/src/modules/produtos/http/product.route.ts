@@ -112,4 +112,23 @@ export default async function productRoutes(app: FastifyInstance) {
     await em.flush();
     return product;
   });
+
+  app.delete('/products/:id', {
+    schema: {
+      tags: ['Produtos'],
+      operationId: 'deleteProduct',
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
+      },
+      response: { 204: { type: 'null' } },
+    },
+  }, async (req, reply) => {
+    const { id } = req.params as any;
+    const em = RequestContext.getEntityManager()!;
+    const product = await em.findOneOrFail(Product, id);
+    await em.removeAndFlush(product);
+    return reply.status(204).send();
+  });
 }

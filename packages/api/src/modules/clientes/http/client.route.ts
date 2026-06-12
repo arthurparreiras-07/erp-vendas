@@ -109,4 +109,23 @@ export default async function clientRoutes(app: FastifyInstance) {
     await em.flush();
     return client;
   });
+
+  app.delete('/clients/:id', {
+    schema: {
+      tags: ['Clientes'],
+      operationId: 'deleteClient',
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
+      },
+      response: { 204: { type: 'null' } },
+    },
+  }, async (req, reply) => {
+    const { id } = req.params as any;
+    const em = RequestContext.getEntityManager()!;
+    const client = await em.findOneOrFail(Client, id);
+    await em.removeAndFlush(client);
+    return reply.status(204).send();
+  });
 }
