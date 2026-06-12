@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { api } from '@/lib/axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/Button';
@@ -48,6 +49,7 @@ export function RelatoriosPage() {
 
   function handleFilter() {
     setActiveFilters({ from, to, sellerId, region });
+    toast.info('Filtros aplicados');
   }
 
   function handleClear() {

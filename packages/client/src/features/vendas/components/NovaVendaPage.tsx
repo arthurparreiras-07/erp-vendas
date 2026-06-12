@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { api } from '@/lib/axios';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -28,7 +29,8 @@ export function NovaVendaPage() {
 
   const createOrder = useMutation({
     mutationFn: (body: any) => api.post('/orders', body),
-    onSuccess: () => navigate({ to: '/vendas' }),
+    onSuccess: () => { toast.success('Pedido criado com sucesso!'); navigate({ to: '/vendas' }); },
+    onError: (err: any) => toast.error(err.response?.data?.error ?? 'Erro ao criar pedido'),
   });
 
   function addToCart(product: any) {

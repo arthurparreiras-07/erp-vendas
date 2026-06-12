@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { RequestContext } from '@mikro-orm/core';
 import { SalesReportUseCase } from '../application/sales-report.use-case';
 import { Goal } from '../domain/goal.entity';
-import { User } from '../../auth/domain/user.entity';
+import { User, UserRole } from '../../auth/domain/user.entity';
+import { requireRole } from '../../../shared/http/authorize';
 
 export default async function reportRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
@@ -45,6 +46,7 @@ export default async function reportRoutes(app: FastifyInstance) {
   });
 
   app.post('/goals', {
+    onRequest: [requireRole(UserRole.ADMIN)],
     schema: {
       tags: ['Relatórios'],
       operationId: 'createGoal',

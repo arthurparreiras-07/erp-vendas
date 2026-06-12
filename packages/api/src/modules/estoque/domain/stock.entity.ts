@@ -1,5 +1,6 @@
 import { Entity, OneToOne, Property } from '@mikro-orm/core';
 import { BaseEntity } from '../../../shared/domain/base.entity';
+import { InsufficientStockError } from '../../../shared/domain/errors';
 import { Product } from '../../produtos/domain/product.entity';
 
 @Entity({ tableName: 'stocks' })
@@ -28,13 +29,19 @@ export class Stock extends BaseEntity {
   }
 
   reserve(qty: number) {
-    if (this.available < qty) throw new Error(`Estoque insuficiente: disponível ${this.available}, solicitado ${qty}`);
+    if (this.available < qty) throw new InsufficientStockError(`Estoque insuficiente: disponível ${this.available}, solicitado ${qty}`);
     this.reserved += qty;
     this.updatedAt = new Date();
   }
 
   release(qty: number) {
     this.reserved = Math.max(0, this.reserved - qty);
+    this.updatedAt = new Date();
+  }
+
+  consume(qty: number) {
+    this.physical = Math.max(0, this.physical - qty);
+    this.release(qty);
     this.updatedAt = new Date();
   }
 

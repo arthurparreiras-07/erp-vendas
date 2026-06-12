@@ -1,5 +1,6 @@
 import { Collection, Entity, Enum, ManyToOne, OneToMany, Property } from '@mikro-orm/core';
 import { BaseEntity } from '../../../shared/domain/base.entity';
+import { ConflictError } from '../../../shared/domain/errors';
 import { Client } from '../../clientes/domain/client.entity';
 import { User } from '../../auth/domain/user.entity';
 import { OrderItem } from './order-item.entity';
@@ -50,12 +51,12 @@ export class Order extends BaseEntity {
   }
 
   confirm() {
-    if (this.status !== OrderStatus.PENDING) throw new Error('Apenas pedidos pendentes podem ser confirmados');
+    if (this.status !== OrderStatus.PENDING) throw new ConflictError('Apenas pedidos pendentes podem ser confirmados');
     this.status = OrderStatus.CONFIRMED;
   }
 
   cancel() {
-    if (this.status === OrderStatus.CANCELLED) throw new Error('Pedido já cancelado');
+    if (this.status === OrderStatus.CANCELLED) throw new ConflictError('Pedido já cancelado');
     this.status = OrderStatus.CANCELLED;
   }
 }

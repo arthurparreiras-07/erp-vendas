@@ -6,6 +6,7 @@ import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import fp from 'fastify-plugin';
+import { DomainError } from './shared/domain/errors';
 
 import dbPlugin from './plugins/db.plugin';
 import swaggerPlugin from './plugins/swagger.plugin';
@@ -18,7 +19,14 @@ import orderRoutes from './modules/pedidos/http/order.route';
 import dashboardRoutes from './modules/dashboard/http/dashboard.route';
 import reportRoutes from './modules/relatorios/http/report.route';
 
-const app = Fastify({ logger: true });
+const isDev = process.env.NODE_ENV !== 'production';
+
+const app = Fastify({
+  logger: {
+    level: isDev ? 'info' : 'warn',
+    ...(isDev && { transport: { target: 'pino-pretty', options: { colorize: true } } }),
+  },
+});
 
 async function main() {
   // contentSecurityPolicy desabilitado para não bloquear o Swagger UI
@@ -48,6 +56,25 @@ async function main() {
       reply.status(401).send({ error: 'Não autorizado' });
     }
   });
+
+  app.setErrorHandler((error, _req, reply) => {
+    if (error instanceof DomainError) {
+      return reply.status(error.statusCode).send({ error: error.message });
+    }
+    if (error.name === 'NotFoundError') {
+      return reply.status(404).send({ error: 'Recurso não encontrado' });
+    }
+    if (error.name === 'ZodError') {
+      return reply.status(400).send({ error: 'Dados inválidos' });
+    }
+    app.log.error(error);
+    return reply.status(500).send({ error: 'Erro interno do servidor' });
+  });
+
+  app.get('/health', { schema: { hide: true } }, async () => ({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+  }));
 
   // rotas sem fp() para preservar encapsulamento — o addHook de cada módulo
   // fica restrito ao seu escopo e não vaza para o POST /auth/login

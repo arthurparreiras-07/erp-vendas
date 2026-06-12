@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { RequestContext } from '@mikro-orm/core';
 import { UpdateStockUseCase } from '../application/update-stock.use-case';
 import { Stock } from '../domain/stock.entity';
+import { requireRole } from '../../../shared/http/authorize';
+import { UserRole } from '../../auth/domain/user.entity';
 
 export default async function stockRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
@@ -31,6 +33,7 @@ export default async function stockRoutes(app: FastifyInstance) {
   });
 
   app.put('/stock/:productId', {
+    onRequest: [requireRole(UserRole.ADMIN)],
     schema: {
       tags: ['Estoque'],
       operationId: 'updateStock',

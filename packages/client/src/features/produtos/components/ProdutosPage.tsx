@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { toast } from 'sonner';
 import { api } from '@/lib/axios';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
 const schema = z.object({
   sku: z.string().min(1, 'SKU obrigatório'),
@@ -25,7 +27,7 @@ export function ProdutosPage() {
   const [editing, setEditing] = useState<any | null>(null);
   const [deleting, setDeleting] = useState<any | null>(null);
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: () => api.get('/products', { params: { limit: 100 } }).then((r) => r.data),
   });
@@ -34,36 +36,25 @@ export function ProdutosPage() {
 
   const create = useMutation({
     mutationFn: (body: FormData) => api.post('/products', body),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['products'] }); closeForm(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['products'] }); toast.success('Produto criado!'); closeForm(); },
+    onError: (err: any) => toast.error(err.response?.data?.error ?? 'Erro ao criar produto'),
   });
 
   const update = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Partial<FormData> }) => api.put(`/products/${id}`, body),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['products'] }); closeForm(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['products'] }); toast.success('Produto atualizado!'); closeForm(); },
+    onError: (err: any) => toast.error(err.response?.data?.error ?? 'Erro ao atualizar produto'),
   });
 
   const remove = useMutation({
     mutationFn: (id: string) => api.delete(`/products/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['products'] }); setDeleting(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['products'] }); toast.success('Produto excluído.'); setDeleting(null); },
+    onError: (err: any) => toast.error(err.response?.data?.error ?? 'Erro ao excluir produto'),
   });
 
-  function openCreate() {
-    setEditing(null);
-    reset({});
-    setOpen(true);
-  }
-
-  function openEdit(product: any) {
-    setEditing(product);
-    reset(product);
-    setOpen(true);
-  }
-
-  function closeForm() {
-    setOpen(false);
-    setEditing(null);
-    reset({});
-  }
+  function openCreate() { setEditing(null); reset({}); setOpen(true); }
+  function openEdit(product: any) { setEditing(product); reset(product); setOpen(true); }
+  function closeForm() { setOpen(false); setEditing(null); reset({}); }
 
   return (
     <div className="space-y-5">
@@ -82,32 +73,34 @@ export function ProdutosPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {data?.items?.map((p: any) => (
-              <tr key={p.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-mono text-xs text-slate-400">{p.sku}</td>
-                <td className="px-4 py-3 font-medium text-slate-800">{p.name}</td>
-                <td className="px-4 py-3 text-slate-500">{p.category ?? '—'}</td>
-                <td className="px-4 py-3">R$ {Number(p.costPrice).toFixed(2)}</td>
-                <td className="px-4 py-3 font-medium text-green-700">R$ {Number(p.salePrice).toFixed(2)}</td>
-                <td className="px-4 py-3">
-                  <span className={(p.stock?.available ?? 0) < 5 ? 'text-red-500 font-medium' : 'text-slate-700'}>
-                    {p.stock?.available ?? 0}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3">
-                    <button onClick={() => openEdit(p)} className="text-blue-600 hover:underline text-xs font-medium">
-                      Editar
-                    </button>
-                    <button onClick={() => setDeleting(p)} className="text-red-500 hover:underline text-xs font-medium">
-                      Excluir
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {!data?.items?.length && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Nenhum produto cadastrado</td></tr>
+            {isLoading ? (
+              <TableSkeleton rows={5} cols={7} />
+            ) : (
+              <>
+                {data?.items?.map((p: any) => (
+                  <tr key={p.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-xs text-slate-400">{p.sku}</td>
+                    <td className="px-4 py-3 font-medium text-slate-800">{p.name}</td>
+                    <td className="px-4 py-3 text-slate-500">{p.category ?? '—'}</td>
+                    <td className="px-4 py-3">R$ {Number(p.costPrice).toFixed(2)}</td>
+                    <td className="px-4 py-3 font-medium text-green-700">R$ {Number(p.salePrice).toFixed(2)}</td>
+                    <td className="px-4 py-3">
+                      <span className={(p.stock?.available ?? 0) < 5 ? 'text-red-500 font-medium' : 'text-slate-700'}>
+                        {p.stock?.available ?? 0}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-3">
+                        <button onClick={() => openEdit(p)} className="text-blue-600 hover:underline text-xs font-medium">Editar</button>
+                        <button onClick={() => setDeleting(p)} className="text-red-500 hover:underline text-xs font-medium">Excluir</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {!data?.items?.length && (
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Nenhum produto cadastrado</td></tr>
+                )}
+              </>
             )}
           </tbody>
         </table>
@@ -122,9 +115,7 @@ export function ProdutosPage() {
             <Input label="Custo (R$) *" type="number" step="0.01" {...register('costPrice')} error={errors.costPrice?.message} />
             <Input label="Preço de Venda (R$) *" type="number" step="0.01" {...register('salePrice')} error={errors.salePrice?.message} />
             <Input label="Categoria" {...register('category')} />
-            {!editing && (
-              <Input label="Estoque Inicial" type="number" {...register('initialStock')} />
-            )}
+            {!editing && <Input label="Estoque Inicial" type="number" {...register('initialStock')} />}
             <div className="flex gap-2 pt-2">
               <Button type="submit" disabled={create.isPending || update.isPending}>
                 {create.isPending || update.isPending ? 'Salvando...' : 'Salvar'}

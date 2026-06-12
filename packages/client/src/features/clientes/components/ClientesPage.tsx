@@ -3,10 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { toast } from 'sonner';
 import { api } from '@/lib/axios';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { Pagination } from '@/components/ui/Pagination';
+
+const LIMIT = 20;
 
 const schema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),
@@ -21,49 +26,53 @@ export function ClientesPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [cnpjSearch, setCnpjSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [deleting, setDeleting] = useState<any | null>(null);
 
-  const { data } = useQuery({
-    queryKey: ['clients', search, cnpjSearch],
-    queryFn: () => api.get('/clients', { params: { name: search || undefined, cnpj: cnpjSearch || undefined } }).then((r) => r.data),
+  const { data, isLoading } = useQuery({
+    queryKey: ['clients', search, cnpjSearch, page],
+    queryFn: () =>
+      api.get('/clients', { params: { name: search || undefined, cnpj: cnpjSearch || undefined, page, limit: LIMIT } })
+        .then((r) => r.data),
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) });
 
   const create = useMutation({
     mutationFn: (body: FormData) => api.post('/clients', body),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clients'] }); closeForm(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clients'] });
+      toast.success('Cliente criado com sucesso!');
+      closeForm();
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error ?? 'Erro ao criar cliente'),
   });
 
   const update = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Partial<FormData> }) => api.put(`/clients/${id}`, body),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clients'] }); closeForm(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clients'] });
+      toast.success('Cliente atualizado!');
+      closeForm();
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error ?? 'Erro ao atualizar cliente'),
   });
 
   const remove = useMutation({
     mutationFn: (id: string) => api.delete(`/clients/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clients'] }); setDeleting(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clients'] });
+      toast.success('Cliente excluído.');
+      setDeleting(null);
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error ?? 'Erro ao excluir cliente'),
   });
 
-  function openCreate() {
-    setEditing(null);
-    reset({});
-    setOpen(true);
-  }
-
-  function openEdit(client: any) {
-    setEditing(client);
-    reset(client);
-    setOpen(true);
-  }
-
-  function closeForm() {
-    setOpen(false);
-    setEditing(null);
-    reset({});
-  }
+  function openCreate() { setEditing(null); reset({}); setOpen(true); }
+  function openEdit(client: any) { setEditing(client); reset(client); setOpen(true); }
+  function closeForm() { setOpen(false); setEditing(null); reset({}); }
 
   return (
     <div className="space-y-5">
@@ -73,18 +82,10 @@ export function ClientesPage() {
       </div>
 
       <div className="flex gap-3">
-        <Input
-          placeholder="Buscar por nome..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
-        />
-        <Input
-          placeholder="Buscar por CNPJ..."
-          value={cnpjSearch}
-          onChange={(e) => setCnpjSearch(e.target.value)}
-          className="max-w-xs"
-        />
+        <Input placeholder="Buscar por nome..." value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="max-w-sm" />
+        <Input placeholder="Buscar por CNPJ..." value={cnpjSearch}
+          onChange={(e) => { setCnpjSearch(e.target.value); setPage(1); }} className="max-w-xs" />
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -97,30 +98,33 @@ export function ClientesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {data?.items?.map((c: any) => (
-              <tr key={c.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-800">{c.name}</td>
-                <td className="px-4 py-3 text-slate-500">{c.cnpj ?? '—'}</td>
-                <td className="px-4 py-3 text-slate-500">{c.email ?? '—'}</td>
-                <td className="px-4 py-3 text-slate-500">{c.region ?? '—'}</td>
-                <td className="px-4 py-3 text-slate-500">{c.phone ?? '—'}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3">
-                    <button onClick={() => openEdit(c)} className="text-blue-600 hover:underline text-xs font-medium">
-                      Editar
-                    </button>
-                    <button onClick={() => setDeleting(c)} className="text-red-500 hover:underline text-xs font-medium">
-                      Excluir
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {!data?.items?.length && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Nenhum cliente encontrado</td></tr>
+            {isLoading ? (
+              <TableSkeleton rows={5} cols={6} />
+            ) : (
+              <>
+                {data?.items?.map((c: any) => (
+                  <tr key={c.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-medium text-slate-800">{c.name}</td>
+                    <td className="px-4 py-3 text-slate-500">{c.cnpj ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-500">{c.email ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-500">{c.region ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-500">{c.phone ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-3">
+                        <button onClick={() => openEdit(c)} className="text-blue-600 hover:underline text-xs font-medium">Editar</button>
+                        <button onClick={() => setDeleting(c)} className="text-red-500 hover:underline text-xs font-medium">Excluir</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {!data?.items?.length && (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Nenhum cliente encontrado</td></tr>
+                )}
+              </>
             )}
           </tbody>
         </table>
+        <Pagination page={page} total={data?.total ?? 0} limit={LIMIT} onChange={setPage} />
       </div>
 
       {open && (

@@ -5,6 +5,8 @@ import { CreateClientUseCase } from '../application/create-client.use-case';
 import { ListClientsUseCase } from '../application/list-clients.use-case';
 import { Client } from '../domain/client.entity';
 import { paginatedClients } from '../../../shared/http/schemas';
+import { requireRole } from '../../../shared/http/authorize';
+import { UserRole } from '../../auth/domain/user.entity';
 
 const clientBody = z.object({
   name: z.string().min(2),
@@ -111,6 +113,7 @@ export default async function clientRoutes(app: FastifyInstance) {
   });
 
   app.delete('/clients/:id', {
+    onRequest: [requireRole(UserRole.ADMIN)],
     schema: {
       tags: ['Clientes'],
       operationId: 'deleteClient',
