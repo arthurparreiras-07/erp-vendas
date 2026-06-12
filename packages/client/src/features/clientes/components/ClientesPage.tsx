@@ -20,13 +20,14 @@ type FormData = z.infer<typeof schema>;
 export function ClientesPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
+  const [cnpjSearch, setCnpjSearch] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [deleting, setDeleting] = useState<any | null>(null);
 
   const { data } = useQuery({
-    queryKey: ['clients', search],
-    queryFn: () => api.get('/clients', { params: { name: search || undefined } }).then((r) => r.data),
+    queryKey: ['clients', search, cnpjSearch],
+    queryFn: () => api.get('/clients', { params: { name: search || undefined, cnpj: cnpjSearch || undefined } }).then((r) => r.data),
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) });
@@ -71,12 +72,20 @@ export function ClientesPage() {
         <Button onClick={openCreate}>+ Novo Cliente</Button>
       </div>
 
-      <Input
-        placeholder="Buscar por nome..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex gap-3">
+        <Input
+          placeholder="Buscar por nome..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
+        <Input
+          placeholder="Buscar por CNPJ..."
+          value={cnpjSearch}
+          onChange={(e) => setCnpjSearch(e.target.value)}
+          className="max-w-xs"
+        />
+      </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <table className="w-full text-sm">

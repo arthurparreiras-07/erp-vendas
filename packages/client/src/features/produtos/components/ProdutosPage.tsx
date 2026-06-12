@@ -76,7 +76,7 @@ export function ProdutosPage() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-600">
             <tr>
-              {['SKU', 'Nome', 'Categoria', 'Custo', 'Preço Venda', 'Ações'].map((h) => (
+              {['SKU', 'Nome', 'Categoria', 'Custo', 'Preço Venda', 'Disponível', 'Ações'].map((h) => (
                 <th key={h} className="px-4 py-3 text-left font-medium">{h}</th>
               ))}
             </tr>
@@ -90,6 +90,11 @@ export function ProdutosPage() {
                 <td className="px-4 py-3">R$ {Number(p.costPrice).toFixed(2)}</td>
                 <td className="px-4 py-3 font-medium text-green-700">R$ {Number(p.salePrice).toFixed(2)}</td>
                 <td className="px-4 py-3">
+                  <span className={(p.stock?.available ?? 0) < 5 ? 'text-red-500 font-medium' : 'text-slate-700'}>
+                    {p.stock?.available ?? 0}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
                   <div className="flex gap-3">
                     <button onClick={() => openEdit(p)} className="text-blue-600 hover:underline text-xs font-medium">
                       Editar
@@ -102,7 +107,7 @@ export function ProdutosPage() {
               </tr>
             ))}
             {!data?.items?.length && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Nenhum produto cadastrado</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Nenhum produto cadastrado</td></tr>
             )}
           </tbody>
         </table>
