@@ -87,6 +87,41 @@ make dev
 
 ---
 
+## Ambientes de produção
+
+### Aplicação
+
+| Serviço | URL |
+|---|---|
+| Frontend | https://erp-vendas-sige.up.railway.app |
+| API (Backend) | https://sige-erp-vendas-api-production.up.railway.app |
+| API Docs (Swagger) | https://sige-erp-vendas-api-production.up.railway.app/docs |
+| API Metrics | https://sige-erp-vendas-api-production.up.railway.app/metrics |
+
+### Monitoramento
+
+| Serviço | URL | Login |
+|---|---|---|
+| Prometheus | https://erp-prometheus.onrender.com | — |
+| Prometheus Targets | https://erp-prometheus.onrender.com/targets | — |
+| Grafana (Render) | https://erp-grafana.onrender.com | admin / admin@erp2026 |
+| Dashboard principal | https://erp-grafana.onrender.com/d/erp-vendas-main | admin / admin@erp2026 |
+
+### Infraestrutura
+
+| Serviço | Plataforma | Obs |
+|---|---|---|
+| API | Railway | Node.js 20, 512MB RAM |
+| Frontend | Railway | nginx, build estático |
+| Banco de dados | Railway (PostgreSQL 16) | interno |
+| Prometheus | Render (free) | coleta a cada 15s |
+| Grafana | Render (free) | dashboards provisionados como código |
+| Métricas persistentes | Grafana Cloud (free) | remote_write, 14 dias de retenção |
+| Load test | GitHub Actions | 3x/dia: 08h, 13h, 19h BRT |
+| Uptime monitor | [Uptime Robot](https://dashboard.uptimerobot.com/monitors) | ping a cada 5 min |
+
+---
+
 ## Requisitos funcionais cobertos
 
 | RF | Descrição |
