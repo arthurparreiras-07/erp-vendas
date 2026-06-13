@@ -3,7 +3,8 @@ SHELL := /bin/bash
 
 .PHONY: install dev dev-api dev-client typecheck typecheck-api typecheck-web \
         seed migration-up migration-create migrate-and-seed \
-        db db-up db-down db-reset orval setup clean help
+        db db-up db-down db-reset orval setup clean \
+        monitoring-up monitoring-down help
 
 # ── Configuração ────────────────────────────────────────────────────────────
 API_DIR := packages/api
@@ -73,6 +74,15 @@ seed:
 
 migrate-and-seed: migration-up seed
 
+# ── Monitoramento (Prometheus + Grafana) ─────────────────────────────────────
+monitoring-up:
+	docker compose --profile monitoring up -d
+	@echo "Prometheus: http://localhost:9090"
+	@echo "Grafana:    http://localhost:3001  (admin/admin)"
+
+monitoring-down:
+	docker compose --profile monitoring down
+
 # ── Orval (geração do client HTTP tipado — requer API rodando) ────────────────
 orval:
 	npm run orval -w $(WEB_DIR)
@@ -108,4 +118,7 @@ help:
 	@echo ""
 	@echo "  make orval             Regenera o client HTTP (requer API rodando)"
 	@echo "  make clean             Remove node_modules e dist"
+	@echo ""
+	@echo "  make monitoring-up     Sobe Prometheus + Grafana (requer API rodando)"
+	@echo "  make monitoring-down   Para Prometheus + Grafana"
 	@echo ""

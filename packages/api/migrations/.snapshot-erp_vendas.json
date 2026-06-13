@@ -232,6 +232,16 @@
           "keyName": "clients_pkey",
           "unique": true,
           "primary": true
+        },
+        {
+          "columnNames": [
+            "region"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "idx_clients_region",
+          "unique": false,
+          "primary": false
         }
       ],
       "checks": [],
@@ -672,6 +682,36 @@
       "indexes": [
         {
           "columnNames": [
+            "created_at"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "idx_orders_created_at",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "columnNames": [
+            "seller_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "idx_orders_seller",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "columnNames": [
+            "status"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "idx_orders_status",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
@@ -847,6 +887,16 @@
       "name": "products",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "category"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "idx_products_category",
+          "unique": false,
+          "primary": false
+        },
         {
           "columnNames": [
             "id"

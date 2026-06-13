@@ -10,6 +10,7 @@ import { DomainError } from './shared/domain/errors';
 
 import dbPlugin from './plugins/db.plugin';
 import swaggerPlugin from './plugins/swagger.plugin';
+import metricsPlugin from './plugins/metrics.plugin';
 
 import authRoutes from './modules/auth/http/auth.route';
 import clientRoutes from './modules/clientes/http/client.route';
@@ -39,6 +40,7 @@ async function main() {
 
   await app.register(rateLimit, { global: true, max: 100, timeWindow: '1 minute' });
   await app.register(cookie);
+  await app.register(metricsPlugin);
   await app.register(swaggerPlugin);
   await app.register(dbPlugin);
 
