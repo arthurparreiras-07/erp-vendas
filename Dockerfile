@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/api/package.json ./packages/api/package.json
 COPY packages/client/package.json ./packages/client/package.json
-RUN npm ci
+RUN npm pkg delete scripts.prepare && npm ci
 
 COPY packages/api/ ./packages/api/
 RUN npm run build -w packages/api
@@ -17,7 +17,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/api/package.json ./packages/api/package.json
 COPY packages/client/package.json ./packages/client/package.json
-RUN npm ci --omit=dev
+RUN npm pkg delete scripts.prepare && npm ci --omit=dev
 
 COPY --from=builder /app/packages/api/dist ./packages/api/dist
 
