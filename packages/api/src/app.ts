@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import 'dotenv/config';
 import Fastify from 'fastify';
 import jwt from '@fastify/jwt';

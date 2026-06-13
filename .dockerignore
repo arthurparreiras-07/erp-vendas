@@ -1,0 +1,10 @@
+node_modules
+packages/api/node_modules
+packages/client/node_modules
+packages/api/dist
+packages/client/dist
+packages/api/.env
+packages/client/.env
+*.log
+.git
+monitoring

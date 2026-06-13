@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import { defineConfig } from '@mikro-orm/postgresql';
+import path from 'path';
+import { defineConfig, ReflectMetadataProvider } from '@mikro-orm/postgresql';
 import { Migrator } from '@mikro-orm/migrations';
 import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
 import { User } from './src/modules/auth/domain/user.entity';
@@ -17,6 +18,8 @@ function requireEnv(name: string): string {
   return value;
 }
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export default defineConfig({
   host: requireEnv('DB_HOST'),
   port: Number(requireEnv('DB_PORT')),
@@ -24,11 +27,11 @@ export default defineConfig({
   password: requireEnv('DB_PASSWORD'),
   dbName: requireEnv('DB_NAME'),
   entities: [User, Client, Product, Stock, Order, OrderItem, Activity, Goal],
-  metadataProvider: TsMorphMetadataProvider,
+  metadataProvider: isProduction ? ReflectMetadataProvider : TsMorphMetadataProvider,
   migrations: {
-    path: './migrations',
+    path: path.join(__dirname, 'migrations'),
     glob: '!(*.d).{js,ts}',
   },
   extensions: [Migrator],
-  debug: process.env.NODE_ENV !== 'production',
+  debug: !isProduction,
 });

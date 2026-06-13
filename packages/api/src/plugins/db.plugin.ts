@@ -12,6 +12,7 @@ declare module 'fastify' {
 
 export default fp(async (app: FastifyInstance) => {
   const orm = await MikroORM.init(config);
+  await orm.getMigrator().up();
   app.decorate('orm', orm);
 
   app.addHook('onRequest', (_req, _reply, done) => {

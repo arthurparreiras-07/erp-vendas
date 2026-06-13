@@ -2,7 +2,7 @@ import axios, { type AxiosRequestConfig } from 'axios';
 import { clearAuth } from '@/lib/auth';
 
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL ?? '/api',
   withCredentials: true,
 });
 
