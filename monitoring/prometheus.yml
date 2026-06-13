@@ -4,6 +4,7 @@ global:
 
 scrape_configs:
   - job_name: 'erp-vendas-api'
+    scheme: https
     static_configs:
-      - targets: ['host.docker.internal:3000']
+      - targets: ['sige-erp-vendas-api-production.up.railway.app']
     metrics_path: '/metrics'
