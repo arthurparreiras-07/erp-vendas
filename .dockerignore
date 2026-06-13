@@ -8,3 +8,4 @@ packages/client/.env
 *.log
 .git
 monitoring
+!monitoring/grafana
