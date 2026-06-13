@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: erp-prometheus
+    runtime: docker
+    dockerfilePath: ./Dockerfile.prometheus
+    plan: free
+
+  - type: web
+    name: erp-grafana
+    runtime: docker
+    dockerfilePath: ./Dockerfile.grafana
+    plan: free
+    envVars:
+      - key: GF_SECURITY_ADMIN_USER
+        value: admin
+      - key: GF_SECURITY_ADMIN_PASSWORD
+        value: admin@erp2026
+      - key: GF_USERS_ALLOW_SIGN_UP
+        value: "false"
+      - key: PROMETHEUS_URL
+        sync: false

@@ -1,0 +1,7 @@
+FROM grafana/grafana:10.4.2
+COPY monitoring/grafana/provisioning /etc/grafana/provisioning
+USER root
+COPY monitoring/grafana/start.sh /start.sh
+RUN chmod +x /start.sh
+USER grafana
+ENTRYPOINT ["/start.sh"]
