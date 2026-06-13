@@ -39,7 +39,7 @@ async function main() {
     credentials: true,
   });
 
-  await app.register(rateLimit, { global: true, max: 100, timeWindow: '1 minute' });
+  await app.register(rateLimit, { global: true, max: 1000, timeWindow: '1 minute' });
   await app.register(cookie);
   await app.register(metricsPlugin);
   await app.register(swaggerPlugin);
