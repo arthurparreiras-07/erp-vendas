@@ -1,7 +1,9 @@
 FROM prom/prometheus:v2.51.0
 COPY monitoring/prometheus.yml /etc/prometheus/prometheus.yml
 ENTRYPOINT []
-CMD ["sh", "-c", "/bin/prometheus \
+CMD ["sh", "-c", "\
+  echo \"$GRAFANA_CLOUD_TOKEN\" > /etc/prometheus/grafana_token && \
+  /bin/prometheus \
   --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/prometheus \
   --web.console.libraries=/usr/share/prometheus/console_libraries \
