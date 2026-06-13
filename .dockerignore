@@ -9,3 +9,4 @@ packages/client/.env
 .git
 monitoring
 !monitoring/grafana
+!monitoring/prometheus.yml
