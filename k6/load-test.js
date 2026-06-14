@@ -35,8 +35,39 @@ const USERS = [
   { email: "maria@erp.com", password: "senha123" },
 ];
 
+const REGIONS = ["Norte", "Sul", "Leste", "Oeste", "Centro"];
+const CATEGORIES = ["Eletrônicos", "Alimentos", "Vestuário", "Ferramentas", "Informática", "Limpeza"];
+
+const COMPANY_PREFIX = ["Norte", "Sul", "Global", "Prime", "Max", "Central", "Nacional", "Alpha", "Mega", "Ultra", "Ágil", "Verde", "Nova", "Forte"];
+const COMPANY_NOUN = ["Comércio", "Indústria", "Serviços", "Soluções", "Distribuidora", "Atacado", "Varejo", "Logística", "Tecnologia", "Consultoria"];
+const COMPANY_SUFFIX = ["Ltda", "S.A.", "ME", "EIRELI", "& Cia"];
+
+const PRODUCT_ADJ = ["Premium", "Pro", "Plus", "Ultra", "Max", "Basic", "Standard", "Elite", "Light", "Turbo"];
+const PRODUCT_NOUN = ["Notebook", "Monitor", "Teclado", "Mouse", "Headset", "Cabo", "Adaptador", "Carregador", "Roteador", "Switch", "Impressora", "Scanner", "Webcam", "Microfone"];
+
+function randomLetters() {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  return Array.from({ length: 3 }, () => letters[randomInt(0, 25)]).join("");
+}
+
+function randomCompanyName() {
+  return `${randomLetters()} ${randomItem(COMPANY_PREFIX)} ${randomItem(COMPANY_NOUN)} ${randomItem(COMPANY_SUFFIX)}`;
+}
+
+function randomProductName() {
+  return `${randomLetters()} ${randomItem(PRODUCT_NOUN)} ${randomItem(PRODUCT_ADJ)}`;
+}
+
 function randomItem(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function uid() {
+  return `${Date.now()}-${randomInt(1000, 9999)}`;
 }
 
 function jsonOrNull(res) {
@@ -105,6 +136,24 @@ export default function () {
     check(http.get(`${BASE_URL}/clients/${client.id}`, p), {
       "GET /clients/:id": (r) => r.status === 200,
     });
+    sleep(0.3);
+  }
+
+  // POST /clients (40% de chance)
+  if (Math.random() < 0.4) {
+    check(
+      http.post(
+        `${BASE_URL}/clients`,
+        JSON.stringify({
+          name: randomCompanyName(),
+          email: `cliente${uid()}@teste.com`,
+          phone: `119${randomInt(10000000, 99999999)}`,
+          region: randomItem(REGIONS),
+        }),
+        p
+      ),
+      { "POST /clients": (r) => r.status === 201 }
+    );
     sleep(0.3);
   }
 
@@ -192,6 +241,27 @@ export default function () {
         check(goal, { "POST /goals": (r) => r.status === 201 });
       }
       sleep(0.3);
+
+      // POST /products — só admin, 30% de chance
+      if (Math.random() < 0.3) {
+        const id = uid();
+        check(
+          http.post(
+            `${BASE_URL}/products`,
+            JSON.stringify({
+              sku: `SKU-${id}`,
+              name: randomProductName(),
+              costPrice: randomInt(10, 500),
+              salePrice: randomInt(501, 1000),
+              category: randomItem(CATEGORIES),
+              initialStock: randomInt(50, 200),
+            }),
+            p
+          ),
+          { "POST /products": (r) => r.status === 201 }
+        );
+        sleep(0.3);
+      }
     }
   }
 
