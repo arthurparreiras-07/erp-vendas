@@ -35,10 +35,11 @@ export default async function authRoutes(app: FastifyInstance) {
     const useCase = new LoginUseCase(em);
     const user = await useCase.execute(email, password);
     const token = app.jwt.sign({ sub: user.id, role: user.role }, { expiresIn: '2h' });
+    const isProd = process.env.NODE_ENV === 'production';
     reply.setCookie('token', token, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: isProd ? 'none' : 'lax',
+      secure: isProd,
       path: '/',
       maxAge: 60 * 60 * 2,
     });
