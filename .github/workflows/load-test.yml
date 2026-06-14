@@ -2,10 +2,8 @@ name: Load Test
 
 on:
   schedule:
-    - cron: '0 11 * * *'  # 08:00 BRT
-    - cron: '0 16 * * *'  # 13:00 BRT
-    - cron: '0 22 * * *'  # 19:00 BRT
-  workflow_dispatch:       # permite rodar manualmente pelo GitHub
+    - cron: "*/30 * * * *" # a cada 30 minutos
+  workflow_dispatch: # permite rodar manualmente pelo GitHub
 
 jobs:
   k6:
