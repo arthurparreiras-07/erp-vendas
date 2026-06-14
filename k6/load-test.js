@@ -109,9 +109,9 @@ export default function () {
   }
 
   // GET /stock
-  check(http.get(`${BASE_URL}/stock`, p), {
-    "GET /stock": (r) => r.status === 200,
-  });
+  const stockRes = http.get(`${BASE_URL}/stock`, p);
+  check(stockRes, { "GET /stock": (r) => r.status === 200 });
+  const stockItems = jsonOrNull(stockRes) || [];
   sleep(0.3);
 
   // GET /stock/:productId
@@ -121,6 +121,26 @@ export default function () {
       "GET /stock/:productId": (r) => r.status === 200,
     });
     sleep(0.3);
+  }
+
+  // PUT /stock/:productId — admin repõe estoque baixo (<= 20 unidades)
+  if (stockItems.length > 0) {
+    const meForStock = jsonOrNull(http.get(`${BASE_URL}/auth/me`, p));
+    if (meForStock?.role === "ADMIN") {
+      for (const s of stockItems) {
+        if ((s.physical - s.reserved) <= 20) {
+          check(
+            http.put(
+              `${BASE_URL}/stock/${s.product.id}`,
+              JSON.stringify({ physical: 500 }),
+              p
+            ),
+            { "PUT /stock (repõe)": (r) => r.status === 200 }
+          );
+          sleep(0.2);
+        }
+      }
+    }
   }
 
   // GET /activities
